@@ -1,0 +1,54 @@
+---
+title: "BRI Data Manipulation"
+author: "Todd Jennings"
+date: "8/29/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(knitr)
+library(tidyverse)
+library(dplyr)
+library(magrittr)
+library(readxl)
+```
+
+```{r}
+#Import data from _data folder
+BRI <- read_xlsx("_data/BRI BU Datasource Table.xlsx")
+#Rename Columns for easier referencing
+TidyBRI <- 
+  BRI %>%
+  mutate(
+    rename(BRI, "08" = "Loan Recieved 2008 ($ Billions)",
+    "09" = "Loans Recieved 2009 ($ Billions)",
+    "10" = "Loans Recieved 2010 ($ Billions)",
+    "11" = "Loans Recieved 2011($ Billions)",
+    "12" = "Loans Recieved 2012 ($ Billions)",
+    "13" = "Loans Recieved 2013 ($ Billions)",
+    "14" = "Loans Recieved 2014 ($ Billions)",
+    "15" = "Loans Recieved 2015 ($ Billions)",
+    "16" = "Loans Recieved 2016 ($ Billions)",
+    "17" = "Loans Recieved 2017 ($ Billions)",
+    "18" = "Loans Recieved 2018 ($ Billions)",
+    "19" = "Loans Recieved 2019 ($ Billions)")
+  ) 
+#Simplify 'TidyBRI' data into just the renamed columns + 'Country'
+TidyBRI <- select(TidyBRI, c('Country', 15:26))
+```
+We have now tidied up the columns to our data and we can begin isolating a few key countries that we'd like to use further down the line.
+```{r}
+#Selecting specific data based on country. Selected: Angola, Cambodia, Ecuador, Ethiopia, Indonesia, Kenya, Kyrgyz Republic, Pakistan, Serbia & Zambia. (Total 10)
+TidyBRI <- TidyBRI[c(1,12,23,27,36,41,42,64,73,93),]
+#Gather all the date columns with loan information into two simple columns. One for the year, and one for the loans received in said year. This is so that R can use this data in graphs.
+TidyBRI <- gather(TidyBRI, key = "Year_Post_2000", value = "Loans_Received", -c("Country"))
+```
+Next, we're going to use faceting to create graphs to represent our finding for the above isolated countries.
+```{r}
+#Create separate graphs for each country, showing the trend of loans received between 2008 and 2019. Currently struggling to create a smooth line as well as showing impacts outside of the large extremes in Pakistan, Angola, etc..
+BRI_Graph <- ggplot(data = TidyBRI, aes(Year_Post_2000, Loans_Received)) + geom_point() + labs(x = "Years After 2000", y = "Loan in Billlion $") + coord_cartesian(ylim = c(0, 15)) + facet_wrap(~ Country, ncol = 3) + geom_smooth(aes(x = Year_Post_2000, y = Loans_Received)) + theme_minimal()
+#Show the results by printing the graph            
+print(BRI_Graph)
+```
